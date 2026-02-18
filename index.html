@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triathlon Tracker</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .card { background: white; padding: 15px; border-radius: 12px; shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { font-size: 1.5rem; color: var(--primary); }
+        .workout-item { display: flex; align-items: center; margin: 10px 0; font-size: 1.1rem; }
+        input[type="checkbox"] { width: 22px; height: 22px; margin-right: 12px; }
+        .info { font-size: 0.9rem; color: #64748b; border-top: 1px solid #e2e8f0; pt: 10px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="setup">
+        <h1>Welcome, Athlete!</h1>
+        <p>When is your Day 1 (Monday)?</p>
+        <input type="date" id="startDate" style="padding:10px; width:100%;">
+        <button onclick="startApp()" style="margin-top:10px; padding:10px; width:100%; background:var(--primary); color:white; border:none; border-radius:5px;">Start Training</button>
+    </div>
+
+    <div id="mainApp" class="hidden">
+        <h1 id="dayDisplay">Day 1 of 70</h1>
+        <div class="card" id="todayWorkouts">
+            </div>
+        
+        <div class="card info">
+            <strong>Key Terms:</strong>
+            <p>• Brick: Transition Swim → Bike/Run immediately.</p>
+            <p>• Intervals: 3H/2E = 3m Hard / 2m Easy.</p>
+        </div>
+        <button onclick="resetDate()" style="font-size:0.7rem; color:red; border:none; background:none;">Reset Start Date</button>
+    </div>
+
+    <script>
+        const plan = [
+            { L: "Legs", PM: "30m Run (Easy)", AM: "" }, // Week 1 Mon
+            // ... Logic would loop through all 70 days ...
+        ];
+
+        function startApp() {
+            const date = document.getElementById('startDate').value;
+            if(!date) return alert("Select a start date!");
+            localStorage.setItem('triStartDate', date);
+            render();
+        }
+
+        function render() {
+            const start = new Date(localStorage.getItem('triStartDate'));
+            const today = new Date();
+            const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
+            
+            if(diffDays > 0 && diffDays <= 70) {
+                document.getElementById('setup').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('dayDisplay').innerText = `Day ${diffDays} of 70`;
+                // Add workout logic here based on your PDF schedule
+            }
+        }
+
+        function resetDate() { localStorage.removeItem('triStartDate'); location.reload(); }
+        if(localStorage.getItem('triStartDate')) render();
+    </script>
+</body>
+</html>
