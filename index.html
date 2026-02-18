@@ -3,53 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>70-Day Tri Tracker</title>
+    <title>Triathlon Tracker</title>
     <style>
-        :root { --blue: #2563eb; --bg: #f8fafc; --text: #1e293b; }
-        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; }
-        header { background: var(--blue); color: white; width: 100%; text-align: center; padding: 20px 0; position: sticky; top: 0; z-index: 10; shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        :root { --blue: #2563eb; --green: #10b981; --bg: #f8fafc; --text: #1e293b; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; }
+        header { background: var(--blue); color: white; width: 100%; text-align: center; padding: 20px 0; position: sticky; top: 0; }
         .nav-container { display: flex; align-items: center; justify-content: space-between; width: 90%; max-width: 400px; margin: 20px 0; }
-        .nav-btn { background: var(--blue); color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .nav-btn:active { opacity: 0.7; }
+        .nav-btn { background: var(--blue); color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; cursor: pointer; }
         .card { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); box-sizing: border-box; }
         .workout-box { border-left: 4px solid var(--blue); padding-left: 15px; margin: 15px 0; }
         .label { font-weight: bold; color: var(--blue); font-size: 0.8rem; text-transform: uppercase; }
-        textarea { width: 100%; height: 100px; margin-top: 20px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
-        .day-info { text-align: center; flex-grow: 1; }
-        .key-terms { font-size: 0.8rem; color: #64748b; margin-top: 20px; width: 90%; max-width: 400px; }
+        textarea { width: 100%; height: 100px; margin-top: 20px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; box-sizing: border-box; font-size: 1rem; }
+        .submit-btn { width: 100%; background: var(--green); color: white; border: none; border-radius: 10px; padding: 15px; margin-top: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .submit-btn:active { transform: scale(0.98); opacity: 0.9; }
+        .key-terms { font-size: 0.8rem; color: #64748b; margin: 20px 0; width: 90%; max-width: 400px; text-align: center; }
     </style>
 </head>
 <body>
 
 <header>
-    <div id="dateLabel">---</div>
-    <h2 id="dayLabel" style="margin: 5px 0 0 0;">Day 1 of 70</h2>
+    <h2 id="dayLabel" style="margin: 0;">Day 1 of 70</h2>
+    <div id="displayDate" style="font-size: 0.9rem; opacity: 0.9;">Feb 16, 2026</div>
 </header>
 
 <div class="nav-container">
     <button class="nav-btn" onclick="moveDay(-1)">←</button>
-    <div class="day-info">
-        <strong id="displayDate">Feb 16</strong>
-    </div>
+    <div style="font-weight: bold;">Toggle Days</div>
     <button class="nav-btn" onclick="moveDay(1)">→</button>
 </div>
 
 <div class="card">
-    <div id="workoutContent">
-        </div>
-    <textarea id="dailyNote" placeholder="Notes (how did it feel? gear issues?)" oninput="saveNote()"></textarea>
+    <div id="workoutContent"></div>
+    <textarea id="dailyNote" placeholder="How was the workout? Log your stats or feelings here..."></textarea>
+    <button class="submit-btn" onclick="manualSave()">SUBMIT / SAVE NOTE</button>
 </div>
 
 <div class="key-terms">
-    <strong>Key:</strong> Brick (Immediate transition) | 3H/2E (3m Hard/2m Easy) | 2F/1J (2m Fast/1m Jog)
+    <strong>Key:</strong> Brick (Direct transition) | 3H/2E (3m Hard/2m Easy) | 2F/1J (2m Fast/1m Jog) [cite: 7, 8]
 </div>
 
 <script>
     const startDate = new Date("2026-02-16T00:00:00");
-    let viewDate = new Date(); 
-    viewDate.setHours(0,0,0,0); // Sync to start of today
+    let viewDate = new Date();
+    viewDate.setHours(0,0,0,0);
 
-    // Schedule logic mapping Week/Day to your PDF content
     const schedule = {
         1: { L: "Legs", PM: "30m Run (Easy)" },
         2: { L: "Upper Body", PM: "None" },
@@ -57,8 +54,7 @@
         4: { L: "Mobility", PM: "None" },
         5: { L: "Power/Plyo", PM: "30m Run (Easy)" },
         6: { AM: "700m Swim (Pace) + 50m Bike (Steady)" },
-        7: { AM: "8x50m Swim Sprints + 35m Run (Easy)" },
-        // Add more weeks here...
+        7: { AM: "8x50m Swim Sprints + 35m Run (Easy)" }
     };
 
     function updateDisplay() {
@@ -66,9 +62,8 @@
         const dayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
         
         document.getElementById('dayLabel').innerText = `Day ${dayNum} of 70`;
-        document.getElementById('displayDate').innerText = viewDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        document.getElementById('displayDate').innerText = viewDate.toDateString();
         
-        // Basic cycle logic for Week 1 (expandable)
         const cycleDay = ((dayNum - 1) % 7) + 1;
         const todayWork = schedule[cycleDay] || { L: "Rest", PM: "Rest" };
         
@@ -86,11 +81,12 @@
         updateDisplay();
     }
 
-    function saveNote() {
+    function manualSave() {
         const diffTime = viewDate - startDate;
         const dayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
         const note = document.getElementById('dailyNote').value;
         localStorage.setItem('note-' + dayNum, note);
+        alert("Note Saved for Day " + dayNum + "!");
     }
 
     updateDisplay();
