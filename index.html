@@ -2,68 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Triathlon Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>70-Day Tri Tracker</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .card { background: white; padding: 15px; border-radius: 12px; shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h1 { font-size: 1.5rem; color: var(--primary); }
-        .workout-item { display: flex; align-items: center; margin: 10px 0; font-size: 1.1rem; }
-        input[type="checkbox"] { width: 22px; height: 22px; margin-right: 12px; }
-        .info { font-size: 0.9rem; color: #64748b; border-top: 1px solid #e2e8f0; pt: 10px; }
-        .hidden { display: none; }
+        :root { --blue: #2563eb; --light-bg: #f1f5f9; }
+        body { font-family: -apple-system, sans-serif; background: var(--light-bg); margin: 0; overflow-x: hidden; }
+        .app-container { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+        header { background: var(--blue); color: white; padding: 20px; text-align: center; }
+        .swipe-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .card { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .workout-box { border-left: 4px solid var(--blue); padding-left: 15px; margin: 15px 0; }
+        textarea { width: 100%; height: 80px; margin-top: 15px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; box-sizing: border-box; }
+        .nav-hint { font-size: 0.8rem; color: #64748b; text-align: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
-    <div id="setup">
-        <h1>Welcome, Athlete!</h1>
-        <p>When is your Day 1 (Monday)?</p>
-        <input type="date" id="startDate" style="padding:10px; width:100%;">
-        <button onclick="startApp()" style="margin-top:10px; padding:10px; width:100%; background:var(--primary); color:white; border:none; border-radius:5px;">Start Training</button>
-    </div>
 
-    <div id="mainApp" class="hidden">
-        <h1 id="dayDisplay">Day 1 of 70</h1>
-        <div class="card" id="todayWorkouts">
-            </div>
-        
-        <div class="card info">
-            <strong>Key Terms:</strong>
-            <p>• Brick: Transition Swim → Bike/Run immediately.</p>
-            <p>• Intervals: 3H/2E = 3m Hard / 2m Easy.</p>
+<div class="app-container" id="touchArea">
+    <header>
+        <div id="dateLabel">Feb 18, 2026</div>
+        <h2 id="dayLabel">Day 3 of 70</h2>
+    </header>
+
+    <div class="swipe-area">
+        <div class="card">
+            <div id="workoutContent">
+                </div>
+            <textarea id="dailyNote" placeholder="Add notes (e.g. felt tired, bike chain loose...)"></textarea>
         </div>
-        <button onclick="resetDate()" style="font-size:0.7rem; color:red; border:none; background:none;">Reset Start Date</button>
     </div>
+    <div class="nav-hint">← Swipe to change days →</div>
+</div>
 
-    <script>
-        const plan = [
-            { L: "Legs", PM: "30m Run (Easy)", AM: "" }, // Week 1 Mon
-            // ... Logic would loop through all 70 days ...
-        ];
+<script>
+    // Data from your PDF
+    const startDate = new Date("2026-02-16");
+    let viewDate = new Date(); // Defaults to today
+    
+    const workouts = {
+        1: { L: "Legs", PM: "30m Run (Easy)" },
+        2: { L: "Upper Body", PM: "No Cardio" },
+        3: { L: "Core/Mobility", PM: "45m Bike (Easy)" },
+        4: { L: "Mobility", PM: "No Cardio" },
+        5: { L: "Power/Plyo", PM: "30m Run (Easy)" },
+        6: { AM: "700m Swim + 50m Bike" },
+        7: { AM: "8x50m Swim Sprints + 35m Run" }
+        // We will fill the rest in next!
+    };
 
-        function startApp() {
-            const date = document.getElementById('startDate').value;
-            if(!date) return alert("Select a start date!");
-            localStorage.setItem('triStartDate', date);
-            render();
-        }
-
-        function render() {
-            const start = new Date(localStorage.getItem('triStartDate'));
-            const today = new Date();
-            const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
-            
-            if(diffDays > 0 && diffDays <= 70) {
-                document.getElementById('setup').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('dayDisplay').innerText = `Day ${diffDays} of 70`;
-                // Add workout logic here based on your PDF schedule
-            }
-        }
-
-        function resetDate() { localStorage.removeItem('triStartDate'); location.reload(); }
-        if(localStorage.getItem('triStartDate')) render();
-    </script>
-</body>
-</html>
+    function updateDisplay() {
+        const diffTime = Math.abs(viewDate - startDate);
+        const dayNum = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        
+        document.getElementById('dateLabel').innerText = viewDate.toDateString();
+        document.getElementById('dayLabel').innerText = `Day ${dayNum} of 70`;
+        
+        // Find workout for the day of the week (1-7)
+        const weekDay = dayNum % 7
