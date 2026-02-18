@@ -2,60 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>70-Day Tri Tracker</title>
     <style>
-        :root { --blue: #2563eb; --light-bg: #f1f5f9; }
-        body { font-family: -apple-system, sans-serif; background: var(--light-bg); margin: 0; overflow-x: hidden; }
-        .app-container { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
-        header { background: var(--blue); color: white; padding: 20px; text-align: center; }
-        .swipe-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .card { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        :root { --blue: #2563eb; --bg: #f8fafc; --text: #1e293b; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; align-items: center; }
+        header { background: var(--blue); color: white; width: 100%; text-align: center; padding: 20px 0; position: sticky; top: 0; z-index: 10; shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .nav-container { display: flex; align-items: center; justify-content: space-between; width: 90%; max-width: 400px; margin: 20px 0; }
+        .nav-btn { background: var(--blue); color: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .nav-btn:active { opacity: 0.7; }
+        .card { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); box-sizing: border-box; }
         .workout-box { border-left: 4px solid var(--blue); padding-left: 15px; margin: 15px 0; }
-        textarea { width: 100%; height: 80px; margin-top: 15px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; box-sizing: border-box; }
-        .nav-hint { font-size: 0.8rem; color: #64748b; text-align: center; margin-bottom: 10px; }
+        .label { font-weight: bold; color: var(--blue); font-size: 0.8rem; text-transform: uppercase; }
+        textarea { width: 100%; height: 100px; margin-top: 20px; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
+        .day-info { text-align: center; flex-grow: 1; }
+        .key-terms { font-size: 0.8rem; color: #64748b; margin-top: 20px; width: 90%; max-width: 400px; }
     </style>
 </head>
 <body>
 
-<div class="app-container" id="touchArea">
-    <header>
-        <div id="dateLabel">Feb 18, 2026</div>
-        <h2 id="dayLabel">Day 3 of 70</h2>
-    </header>
+<header>
+    <div id="dateLabel">---</div>
+    <h2 id="dayLabel" style="margin: 5px 0 0 0;">Day 1 of 70</h2>
+</header>
 
-    <div class="swipe-area">
-        <div class="card">
-            <div id="workoutContent">
-                </div>
-            <textarea id="dailyNote" placeholder="Add notes (e.g. felt tired, bike chain loose...)"></textarea>
-        </div>
+<div class="nav-container">
+    <button class="nav-btn" onclick="moveDay(-1)">←</button>
+    <div class="day-info">
+        <strong id="displayDate">Feb 16</strong>
     </div>
-    <div class="nav-hint">← Swipe to change days →</div>
+    <button class="nav-btn" onclick="moveDay(1)">→</button>
+</div>
+
+<div class="card">
+    <div id="workoutContent">
+        </div>
+    <textarea id="dailyNote" placeholder="Notes (how did it feel? gear issues?)" oninput="saveNote()"></textarea>
+</div>
+
+<div class="key-terms">
+    <strong>Key:</strong> Brick (Immediate transition) | 3H/2E (3m Hard/2m Easy) | 2F/1J (2m Fast/1m Jog)
 </div>
 
 <script>
-    // Data from your PDF
-    const startDate = new Date("2026-02-16");
-    let viewDate = new Date(); // Defaults to today
-    
-    const workouts = {
+    const startDate = new Date("2026-02-16T00:00:00");
+    let viewDate = new Date(); 
+    viewDate.setHours(0,0,0,0); // Sync to start of today
+
+    // Schedule logic mapping Week/Day to your PDF content
+    const schedule = {
         1: { L: "Legs", PM: "30m Run (Easy)" },
-        2: { L: "Upper Body", PM: "No Cardio" },
+        2: { L: "Upper Body", PM: "None" },
         3: { L: "Core/Mobility", PM: "45m Bike (Easy)" },
-        4: { L: "Mobility", PM: "No Cardio" },
+        4: { L: "Mobility", PM: "None" },
         5: { L: "Power/Plyo", PM: "30m Run (Easy)" },
-        6: { AM: "700m Swim + 50m Bike" },
-        7: { AM: "8x50m Swim Sprints + 35m Run" }
-        // We will fill the rest in next!
+        6: { AM: "700m Swim (Pace) + 50m Bike (Steady)" },
+        7: { AM: "8x50m Swim Sprints + 35m Run (Easy)" },
+        // Add more weeks here...
     };
 
     function updateDisplay() {
-        const diffTime = Math.abs(viewDate - startDate);
-        const dayNum = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const diffTime = viewDate - startDate;
+        const dayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
         
-        document.getElementById('dateLabel').innerText = viewDate.toDateString();
         document.getElementById('dayLabel').innerText = `Day ${dayNum} of 70`;
+        document.getElementById('displayDate').innerText = viewDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         
-        // Find workout for the day of the week (1-7)
-        const weekDay = dayNum % 7
+        // Basic cycle logic for Week 1 (expandable)
+        const cycleDay = ((dayNum - 1) % 7) + 1;
+        const todayWork = schedule[cycleDay] || { L: "Rest", PM: "Rest" };
+        
+        let html = "";
+        if(todayWork.AM) html += `<div class="workout-box"><div class="label">Weekend AM</div>${todayWork.AM}</div>`;
+        if(todayWork.L) html += `<div class="workout-box"><div class="label">Lunch Strength</div>${todayWork.L}</div>`;
+        if(todayWork.PM) html += `<div class="workout-box"><div class="label">Afternoon Cardio</div>${todayWork.PM}</div>`;
+        
+        document.getElementById('workoutContent').innerHTML = html;
+        document.getElementById('dailyNote').value = localStorage.getItem('note-' + dayNum) || "";
+    }
+
+    function moveDay(step) {
+        viewDate.setDate(viewDate.getDate() + step);
+        updateDisplay();
+    }
+
+    function saveNote() {
+        const diffTime = viewDate - startDate;
+        const dayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const note = document.getElementById('dailyNote').value;
+        localStorage.setItem('note-' + dayNum, note);
+    }
+
+    updateDisplay();
+</script>
+
+</body>
+</html>
